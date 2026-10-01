@@ -18,3 +18,7 @@ docker run --rm -v "${PWD}:/src" -w /src registry.gitlab.steamos.cloud/steamrt/s
 ```
 
 Outputs `buildenv_libs.h` and `libcheck.ext.so`
+
+## Usage
+
+Console command: `sm libcheck`
