@@ -223,11 +223,20 @@ void CheckSniper(const std::vector<std::string> &dirs, Sink out) {
   out(line);
 }
 
+// NOLOAD never maps anything. glibc also matches already-loaded objects by file
+// identity, so a different path to the same file (symlinked game dir) still counts.
+bool IsLoaded(const char *path) {
+  void *h = dlopen(path, RTLD_LAZY | RTLD_NOLOAD);
+  if (h)
+    dlclose(h);
+  return h != nullptr;
+}
+
 void CheckShipped(const std::vector<std::string> &game,
                   const std::vector<std::string> &all,
                   const std::vector<std::string> &sys, Sink out) {
   char line[PATH_MAX * 2 + 128];
-  int libs = 0, unresolved = 0;
+  int libs = 0, unresolved = 0, unresolvedLoaded = 0;
   for (const std::string &dir : game) {
     DIR *d = opendir(dir.c_str());
     if (!d) {
@@ -240,12 +249,14 @@ void CheckShipped(const std::vector<std::string> &game,
       if (!strstr(e->d_name, ".so") || !IsElf386(path.c_str()))
         continue;
       libs++;
+      bool loaded = IsLoaded(path.c_str());
+      const char *state = loaded ? "loaded" : "not loaded";
 
       // Which copy wins depends on search order, so show both.
       std::string sysCopy;
       if (Resolve(e->d_name, sys, sysCopy)) {
-        snprintf(line, sizeof(line), "  %-28s shadows %s", path.c_str(),
-                 sysCopy.c_str());
+        snprintf(line, sizeof(line), "  %-28s shadows %s (%s)", path.c_str(),
+                 sysCopy.c_str(), state);
         out(line);
       }
 
@@ -253,16 +264,19 @@ void CheckShipped(const std::vector<std::string> &game,
         std::string found;
         if (Resolve(dep.c_str(), all, found))
           continue;
-        snprintf(line, sizeof(line), "  %-28s needs %s: MISSING", path.c_str(),
-                 dep.c_str());
+        snprintf(line, sizeof(line), "  %-28s needs %s: MISSING (%s)",
+                 path.c_str(), dep.c_str(), state);
         out(line);
         unresolved++;
+        if (loaded)
+          unresolvedLoaded++;
       }
     }
     closedir(d);
   }
-  snprintf(line, sizeof(line), "Shipped: %d libs, %d unresolved deps", libs,
-           unresolved);
+  snprintf(line, sizeof(line),
+           "Shipped: %d libs, %d unresolved deps (%d in loaded libs)", libs,
+           unresolved, unresolvedLoaded);
   out(line);
 }
 
