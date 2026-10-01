@@ -22,3 +22,5 @@ Outputs `buildenv_libs.h` and `libcheck.ext.so`
 ## Usage
 
 Console command: `sm libcheck`
+
+If not using the `.autoload` file need to run: `sm exts load libcheck` first.
