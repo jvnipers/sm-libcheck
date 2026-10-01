@@ -1,0 +1,4 @@
+.vs*
+sourcemod*/
+*.so
+buildenv_libs.h
