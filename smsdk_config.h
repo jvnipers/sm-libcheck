@@ -3,7 +3,7 @@
 
 #define SMEXT_CONF_NAME        "LibCheck"
 #define SMEXT_CONF_DESCRIPTION "Reports system library versions visible to srcds"
-#define SMEXT_CONF_VERSION     "1.0"
+#define SMEXT_CONF_VERSION     "1.1"
 #define SMEXT_CONF_AUTHOR      "clanker & jupi"
 #define SMEXT_CONF_URL         "https://github.com/jvnipers/sm-libcheck"
 #define SMEXT_CONF_LOGTAG      "LIBCHECK"

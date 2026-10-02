@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <dlfcn.h>
 #include <elf.h>
+#include <errno.h>
 #include <gnu/libc-version.h>
 #include <limits.h>
 #include <link.h>
@@ -325,10 +326,29 @@ void ToConsole(const char *line) { rootconsole->ConsolePrint("%s", line); }
 
 } // namespace
 
+FILE *g_file;
+void ToFile(const char *line) { fprintf(g_file, "%s\n", line); }
+
+// The report runs to hundreds of lines, which trips the server's console/log rate limit.
+void ReportToFile(Sink notify) {
+  char path[PATH_MAX], line[PATH_MAX + 64];
+  smutils->BuildPath(Path_SM, path, sizeof(path), "logs/libcheck.log");
+  g_file = fopen(path, "w");
+  if (!g_file) {
+    snprintf(line, sizeof(line), "Cannot write %s: %s", path, strerror(errno));
+    notify(line);
+    return;
+  }
+  Report(ToFile);
+  fclose(g_file);
+  snprintf(line, sizeof(line), "Report written to %s", path);
+  notify(line);
+}
+
 class LibCheck : public SDKExtension, public IRootConsoleCommand {
 public:
   bool SDK_OnLoad(char *error, size_t maxlen, bool late) override {
-    Report(ToLog);
+    ReportToFile(ToLog);
     rootconsole->AddRootConsoleCommand3("libcheck",
                                         "Report system library versions", this);
     return true;
@@ -340,7 +360,7 @@ public:
 
   void OnRootConsoleCommand(const char *cmdname,
                             const ICommandArgs *args) override {
-    Report(ToConsole);
+    ReportToFile(ToConsole);
   }
 };
 

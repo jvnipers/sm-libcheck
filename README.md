@@ -23,4 +23,6 @@ Outputs `buildenv_libs.h` and `libcheck.ext.so`
 
 Console command: `sm libcheck`
 
+The report is written to `addons/sourcemod/logs/libcheck.log` (on load and on each command run).
+
 If not using the `.autoload` file need to run: `sm exts load libcheck` first.
